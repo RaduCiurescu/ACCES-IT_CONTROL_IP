@@ -1,0 +1,6 @@
+POST http://192.168.137.1:3000/send-string
+Content-Type: application/json
+
+{
+  "string": "bofa"
+}

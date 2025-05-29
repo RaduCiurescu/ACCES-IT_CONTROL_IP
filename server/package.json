@@ -1,0 +1,15 @@
+{
+    "name": "proiectip",
+    "version": "1.0.0",
+    "description": "A simple Express server for handling requests from the testWIFI application.",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "body-parser": "^2.2.0",
+        "express": "^4.21.2"
+    },
+    "author": "",
+    "license": "ISC"
+}
