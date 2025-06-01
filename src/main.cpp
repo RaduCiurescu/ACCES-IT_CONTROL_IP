@@ -1,4 +1,8 @@
 #include <Arduino.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
@@ -11,6 +15,11 @@
 #define SERVO 17
 #define intrare_SENSOR 15  
 #define iesire_SENSOR 4  
+#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+#define CHARACTERISTIC_UUID "abcdef12-3456-7890-abcd-ef1234567890"
+
+BluetoothSerial SerialBT;
+
 
 enum STATE{
   IN,
@@ -21,13 +30,16 @@ enum STATE{
 const char* ssid = "bofadn2";       // Your Wi-Fi SSID
 const char* password = "12345678"; // Your Wi-Fi password
 
-BluetoothSerial SerialBT;
+unsigned long lastPrintTime = 0;
+bool wasConnected = false;
+
 bool acces=false;
 STATE currentState=NONE;
 const char* serverName = "http://192.168.137.173:3000/api/send-string"; // IP address of your Express server
 Servo myServo;
 String code="";
 bool permission=false;
+
 String directieToString(STATE d) {
   if(d == IN) 
   return "IN" ;
@@ -92,9 +104,18 @@ void sendStringToServer() {
 }
 
 
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      std::string value = pCharacteristic->getValue();
+      Serial.print("Received over BLE: ");
+      code=String(value.c_str());
+      Serial.println(code);
+      sendStringToServer();
+    }
+};
+
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
    pinMode(RED,OUTPUT);
    pinMode(BLUE,OUTPUT);
@@ -110,7 +131,20 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
-  SerialBT.begin("ESP32_ACCESS");
+  
+  Serial.println("BLE server started, waiting for connections...");
+  SerialBT.begin("ESP32_ACCES");
+  // BLEDevice::init("ESP32_GATE");
+  // BLEServer *pServer = BLEDevice::createServer();
+  // BLEService *pService = pServer->createService(SERVICE_UUID);
+  // BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+  //                                        CHARACTERISTIC_UUID,
+  //                                        BLECharacteristic::PROPERTY_WRITE
+  //                                      );
+  // pCharacteristic->setCallbacks(new MyCallbacks());
+  
+  // pService->start();
+  // BLEDevice::startAdvertising();// Poți lăsa gol sau poți pune debug aici
   
 }
 /*
@@ -131,7 +165,16 @@ void loop() {
       Serial.println("Detectat la intrare → IN");
     }
   }
+ if (SerialBT.available()) {
+   { code = SerialBT.readStringUntil('\n');
+    Serial.println("Received: " + code);
+    sendStringToServer();
+    SerialBT.println("ACCES_GRANTED");
+  //treat server response
+  }
 
+    // Aici acționezi bariera
+  }
   // Dacă nu mai e nimic în dreptul senzorilor, resetăm
   if (currentState != NONE && iesireState == HIGH && intrareState == HIGH) {
     Serial.println("Nimic în dreptul senzorilor, revenim la NONE");
