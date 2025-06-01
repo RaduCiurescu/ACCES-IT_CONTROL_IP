@@ -1,8 +1,4 @@
 #include <Arduino.h>
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
@@ -49,7 +45,7 @@ String directieToString(STATE d) {
   return "NONE";
 }
 void handleServerResponse(const String& response) {
-  StaticJsonDocument<200> doc;
+  JsonDocument doc;
 
   DeserializationError error = deserializeJson(doc, response);
   if (error) {
@@ -64,7 +60,13 @@ void handleServerResponse(const String& response) {
     Serial.println(permission ? "true" : "false");
     if(permission) {
       myServo.write(-90);
+      ////---------------------------
+      SerialBT.println("ACCES_GRANTED");
     } 
+    else
+    { ///-----------------------
+      SerialBT.println("ACCES_DENIED");
+    }
   } else {
     Serial.println("Key 'access' not found in response");
   }
@@ -104,17 +106,6 @@ void sendStringToServer() {
 }
 
 
-class MyCallbacks: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string value = pCharacteristic->getValue();
-      Serial.print("Received over BLE: ");
-      code=String(value.c_str());
-      Serial.println(code);
-      sendStringToServer();
-    }
-};
-
-
 void setup() {
   Serial.begin(115200);
    pinMode(RED,OUTPUT);
@@ -134,18 +125,7 @@ void setup() {
   
   Serial.println("BLE server started, waiting for connections...");
   SerialBT.begin("ESP32_ACCES");
-  // BLEDevice::init("ESP32_GATE");
-  // BLEServer *pServer = BLEDevice::createServer();
-  // BLEService *pService = pServer->createService(SERVICE_UUID);
-  // BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-  //                                        CHARACTERISTIC_UUID,
-  //                                        BLECharacteristic::PROPERTY_WRITE
-  //                                      );
-  // pCharacteristic->setCallbacks(new MyCallbacks());
-  
-  // pService->start();
-  // BLEDevice::startAdvertising();// Poți lăsa gol sau poți pune debug aici
-  
+ 
 }
 /*
 intra masina intre senzori---->>state in/out-->if pt state in||if pt state out
@@ -169,11 +149,8 @@ void loop() {
    { code = SerialBT.readStringUntil('\n');
     Serial.println("Received: " + code);
     sendStringToServer();
-    SerialBT.println("ACCES_GRANTED");
   //treat server response
   }
-
-    // Aici acționezi bariera
   }
   // Dacă nu mai e nimic în dreptul senzorilor, resetăm
   if (currentState != NONE && iesireState == HIGH && intrareState == HIGH) {
