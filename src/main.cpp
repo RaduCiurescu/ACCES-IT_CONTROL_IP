@@ -4,13 +4,15 @@
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
 #include "BluetoothSerial.h"
+
 #define RED 26
 #define GREEN 25
 #define BLUE 33
 #define YELLOW 32
 #define SERVO 17
-#define intrare_SENSOR 15  
-#define iesire_SENSOR 4  
+#define intrare_SENSOR 2  
+#define iesire_SENSOR 8  
+
 #define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
 #define CHARACTERISTIC_UUID "abcdef12-3456-7890-abcd-ef1234567890"
 
@@ -172,7 +174,7 @@ void loop() {
   // digitalWrite(YELLOW, LOW); // Power up the LED
   // delay(1000); // this speeds
   
-  delay(50);
+  delay(100);
 }
 
   
