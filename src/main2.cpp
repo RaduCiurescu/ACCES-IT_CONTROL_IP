@@ -21,10 +21,10 @@ enum STATE {
   NONE
 };
 
-
 const char* ssid = "bofadn2";
 const char* password = "12345678";
-const char* serverName = "http://192.168.137.173:3000/api/send-string";
+const char* serverName1 = "http://192.168.127.234:3000/api/free-access";
+const char* serverName2 = "http://192.168.127.234:3000/api/verify-access-from-mobile";
 unsigned long lastPrintTime = 0;
 bool wasConnected = false;
 bool acces = false;
@@ -32,6 +32,36 @@ STATE currentState = NONE;
 Servo myServo;
 String code = "";
 bool permission = false;
+
+
+
+void checkServerForFreeAccess() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(serverName1); // Update this endpoint if needed
+    http.setTimeout(3000);
+    
+    int httpResponseCode = http.GET();
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println("Free Access Server Response: " + response);
+
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, response);
+
+      if (!error && doc.containsKey("access") && doc["access"] == true) {
+        Serial.println("DESCHIDE BARIERA");
+        myServo.write(0); // Deschide bariera
+        delay(3000);
+        myServo.write(90); // Închide bariera
+      }
+    } else {
+      Serial.println("Free access check failed. Code: " + String(httpResponseCode));
+    }
+
+    http.end();
+  }
+}
 
 
 String directieToString(STATE d) {
@@ -68,11 +98,11 @@ void handleServerResponse(const String& response) {
 void sendStringToServer() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(serverName);
+    http.begin(serverName2);
     http.setTimeout(3000);  // Timeout conexiune
     http.addHeader("Content-Type", "application/json");
 
-    String payload = "{\"id\":\"" + code + "\",\"direction\":\"" + directieToString(currentState) + "\"}";
+    String payload = "{\"id\":\"" + code + "\"}";
 
     int httpResponseCode = http.POST(payload);
 
@@ -122,26 +152,22 @@ void loop() {
   int iesireState = digitalRead(iesire_SENSOR);
   int intrareState = digitalRead(intrare_SENSOR);
   // Verificăm dacă a trecut 1 secundă
-  if (millis() - lastPrintTime >= 2000) {
-    lastPrintTime = millis();
-    
-    if (SerialBT.hasClient()) {
-      if (!wasConnected) {
-        Serial.println("Device connected.");
-        wasConnected = true;
-      }
-      
-      // Nu putem obține direct numele dispozitivului conectat cu BluetoothSerial.
-      // Dar putem afișa că este conectat.
-      Serial.println("Status: Connected.");
-    } else {
-      if (wasConnected) {
-        Serial.println("Device disconnected.");
-        wasConnected = false;
-      }
-      Serial.println("Status: Not connected.");
-    }
+  if(WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("trying to connect");
+    //digitalWrite(YELLOW,HIGH);
   }
+  ////bt
+  if (SerialBT.hasClient()) {
+  if (!wasConnected) {
+    Serial.println("Device connected.");
+    wasConnected = true;
+  }
+} else {
+  Serial.println("Status: Not connected.");
+  wasConnected = false;
+}
+
 
    if (currentState == NONE) {
     if (iesireState == LOW) {
@@ -160,7 +186,11 @@ void loop() {
     sendStringToServer();
     SerialBT.println("ACCES_GRANTED");}
     // Aici acționezi bariera
-  }
+  }else
+    {
+      checkServerForFreeAccess();
+    }
+
 
     if (currentState != NONE && iesireState == HIGH && intrareState == HIGH) {
     Serial.println("Nimic în dreptul senzorilor, revenim la NONE");
@@ -169,5 +199,5 @@ void loop() {
     permission = false;
     myServo.write(90); // Închide bariera
   }
-  delay(500);
+  delay(1000);
 }

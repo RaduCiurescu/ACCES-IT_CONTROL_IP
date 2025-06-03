@@ -1,55 +1,31 @@
-/*
-  IR Breakbeam sensor demo with one LED!
-*/
-#include <Arduino.h>
-#include <ESP32Servo.h>
-#define RED 26
-#define GREEN 25
-#define BLUE 33
-#define YELLOW 32
-#define SERVO 17
-#define intrare_SENSOR 15  
-#define iesire_SENSOR 4 
+#include<Arduino.h>
+#define SENSOR_INTRARE 2
+#define SENSOR_IESIRE 15  // Dacă dă eroare, schimbă cu 18
 
-// variables will change:
-int sensorState = 0, lastState = 0; // variable for reading the sensor status
-Servo myServo;
 void setup() {
-Serial.begin(115200);
-   pinMode(RED,OUTPUT);
-   pinMode(BLUE,OUTPUT);
-   pinMode(GREEN,OUTPUT);
-   pinMode(YELLOW,OUTPUT);
-  pinMode(intrare_SENSOR, INPUT_PULLUP);
-  pinMode(iesire_SENSOR, INPUT_PULLUP);
-  myServo.attach(SERVO);
+  Serial.begin(115200);
 
-  // Start serial communication at 9600 baud rate:
-  Serial.begin(9600);
+  pinMode(SENSOR_INTRARE, INPUT_PULLUP);
+  pinMode(SENSOR_IESIRE, INPUT_PULLUP);
+
+  Serial.println("Pornit - monitorizare senzori IR");
 }
 
 void loop() {
-  // Read the state of the IR sensor:
-  sensorState = digitalRead(SENSORPIN);
+  bool intrare = digitalRead(SENSOR_INTRARE) == LOW; // LOW = fascicul întrerupt
+  bool iesire  = digitalRead(SENSOR_IESIRE) == LOW;
 
-  // Check if the sensor beam is broken (LOW means the beam is broken):
-  if (sensorState == LOW) {
-    // Turn LED on when the beam is broken:
-    digitalWrite(LEDPIN, HIGH);  
-  } 
-  else {
-    // Turn LED off when the beam is unbroken:
-    digitalWrite(LEDPIN, LOW);   
+  if (intrare) {
+    Serial.println("Obstacol detectat la INTRARE");
   }
 
-  // Print state change to serial monitor:
-  if (sensorState == HIGH && lastState == LOW) {
-    Serial.println("Unbroken");
-  } 
-  if (sensorState == LOW && lastState == HIGH) {
-    Serial.println("Broken");
+  if (iesire) {
+    Serial.println("Obstacol detectat la IESIRE");
   }
 
-  // Update last state to the current state:
-  lastState = sensorState;
+  if (!intrare && !iesire) {
+    Serial.println("Niciun obstacol detectat");
+  }
+
+  delay(200);
 }

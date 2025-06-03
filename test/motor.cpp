@@ -14,11 +14,13 @@
  }
  
  void loop() {
-   // step one revolution  in one direction:
-   myServo.write(90);
-   delay(2000);
-   myServo.write(-90);
-   delay(2000);
+  //  // step one revolution  in one direction:
+  //  myServo.write(90);
+  //  delay(2000);
+  //  myServo.write(-90);
+  //  delay(2000);
+   Serial.print("mmmmmmmmm");
+   delay(100);
  }
  
  
