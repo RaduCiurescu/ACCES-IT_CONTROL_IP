@@ -1,4 +1,5 @@
 🚧 ESP32 – Barrier Control with IR Sensors, Bluetooth, and HTTP Server
+
 🔍 Description
 This application runs on an ESP32 Denky board and controls a servo-driven barrier using:
 
