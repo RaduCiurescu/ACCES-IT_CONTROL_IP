@@ -8,8 +8,8 @@
 #define GREEN 25
 #define BLUE 33
 #define YELLOW 32
-#define SERVO 17
-#define intrare_SENSOR 2  
+#define SERVO 15
+#define intrare_SENSOR 4 
 #define iesire_SENSOR 15  
 
 
@@ -35,6 +35,14 @@ bool permission = false;
 
 
 
+void openGate()
+{
+  Serial.println("DESCHIDE BARIERA");
+  myServo.write(90); // Deschide bariera
+  delay(3000);
+  myServo.write(0); // Închide bariera
+}
+
 void checkServerForFreeAccess() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -50,10 +58,7 @@ void checkServerForFreeAccess() {
       DeserializationError error = deserializeJson(doc, response);
 
       if (!error && doc.containsKey("access") && doc["access"] == true) {
-        Serial.println("DESCHIDE BARIERA");
-        myServo.write(0); // Deschide bariera
-        delay(3000);
-        myServo.write(90); // Închide bariera
+        openGate();
       }
     } else {
       Serial.println("Free access check failed. Code: " + String(httpResponseCode));
@@ -122,7 +127,6 @@ void sendStringToServer() {
 }
 
 
-
 void setup() {
   Serial.begin(115200);
  
@@ -136,11 +140,11 @@ void setup() {
  
   SerialBT.begin("ESP32_ACCESS"); // Numele ESP32 ca dispozitiv Bluetooth
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+  if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Connecting to WiFi...");
   }
-  Serial.println("Connected to WiFi");
+  else
+  Serial.println("not connected to WiFi");
 
   SerialBT.begin("ESP32_ACCES");
   Serial.println("Bluetooth Serial started");
@@ -179,20 +183,32 @@ void loop() {
     }
   }
 
+  if(iesireState==LOW || intrareState==LOW)
+  {
   // Citire date de la client Bluetooth
-  if (SerialBT.available()) {
+  if (SerialBT.available())
    {  code = SerialBT.readStringUntil('\n');
-
-    sendStringToServer();
-    SerialBT.println("ACCES_GRANTED");}
-    // Aici acționezi bariera
-  }else
+      if( code=="TRUE")
+      {
+        openGate(); //pieton
+      }
+      else{
+      sendStringToServer(); //vehicul
+      SerialBT.println("ACCES_GRANTED");
+      }
+  }
+  else
     {
       checkServerForFreeAccess();
     }
+    Serial.println("senzorii detecteaza");
+  }
+  else{
+    Serial.println("senzorii nu detecteaza nimic");
+  }
 
-
-    if (currentState != NONE && iesireState == HIGH && intrareState == HIGH) {
+    if (currentState != NONE && iesireState == HIGH && intrareState == HIGH) 
+    {
     Serial.println("Nimic în dreptul senzorilor, revenim la NONE");
     currentState = NONE;
     code = "";
