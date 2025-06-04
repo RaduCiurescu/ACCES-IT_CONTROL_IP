@@ -4,10 +4,10 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
-#define RED 26
-#define GREEN 25
-#define BLUE 33
-#define YELLOW 32
+#define RED 18
+#define GREEN 17
+#define BLUE 19
+#define YELLOW 16
 #define SERVO 15
 #define intrare_SENSOR 4 
 #define iesire_SENSOR 15  
@@ -25,6 +25,7 @@ const char* ssid = "bofadn2";
 const char* password = "12345678";
 const char* serverName1 = "http://192.168.127.234:3000/api/free-access";
 const char* serverName2 = "http://192.168.127.234:3000/api/verify-access-from-mobile";
+const char* serverName3 = "http://192.168.127.234:3000/api/manual-open";
 unsigned long lastPrintTime = 0;
 bool wasConnected = false;
 bool acces = false;
@@ -32,22 +33,27 @@ STATE currentState = NONE;
 Servo myServo;
 String code = "";
 bool permission = false;
-
+bool internetSTATE=false;
 
 
 void openGate()
 {
   Serial.println("DESCHIDE BARIERA");
   myServo.write(90); // Deschide bariera
-  delay(3000);
+  digitalWrite(BLUE,HIGH);
+  digitalWrite(GREEN,HIGH);
+  delay(1000);
+  digitalWrite(GREEN,LOW);
+  delay(2000);
   myServo.write(0); // Închide bariera
+  digitalWrite(BLUE,LOW);
 }
 
 void checkServerForFreeAccess() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverName1); // Update this endpoint if needed
-    http.setTimeout(3000);
+    http.setTimeout(1000);
     
     int httpResponseCode = http.GET();
     if (httpResponseCode > 0) {
@@ -62,6 +68,31 @@ void checkServerForFreeAccess() {
       }
     } else {
       Serial.println("Free access check failed. Code: " + String(httpResponseCode));
+    }
+
+    http.end();
+  }
+}
+
+void checkServerForFreeAccess2() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(serverName3); // Update this endpoint if needed
+    http.setTimeout(1000);
+    
+    int httpResponseCode = http.GET();
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println("OPEN MANUAL Server Response: " + response);
+
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, response);
+
+      if (!error && doc.containsKey("access") && doc["access"] == true) {
+        openGate();
+      }
+    } else {
+      Serial.println("OPEN MANUAL check failed. Code: " + String(httpResponseCode));
     }
 
     http.end();
@@ -136,7 +167,10 @@ void setup() {
   myServo.write(90); // Închide bariera inițial
 
  
- 
+  pinMode(RED,OUTPUT);
+  pinMode(GREEN,OUTPUT);
+  pinMode(BLUE,OUTPUT);
+  pinMode(YELLOW,OUTPUT);
  
   SerialBT.begin("ESP32_ACCESS"); // Numele ESP32 ca dispozitiv Bluetooth
   WiFi.begin(ssid, password);
@@ -159,7 +193,10 @@ void loop() {
   if(WiFi.status() != WL_CONNECTED)
   {
     Serial.println("trying to connect");
-    //digitalWrite(YELLOW,HIGH);
+    digitalWrite(YELLOW,LOW);
+  }
+  else{
+    digitalWrite(YELLOW,HIGH);
   }
   ////bt
   if (SerialBT.hasClient()) {
@@ -200,6 +237,7 @@ void loop() {
   else
     {
       checkServerForFreeAccess();
+      //checkServerForFreeAccess2();
     }
     Serial.println("senzorii detecteaza");
   }
