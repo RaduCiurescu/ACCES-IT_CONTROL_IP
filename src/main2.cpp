@@ -48,7 +48,13 @@ void openGate()
   myServo.write(0); // Închide bariera
   digitalWrite(BLUE,LOW);
 }
-
+void rejectResponse()
+{
+      digitalWrite(RED,HIGH);
+      delay(1000);
+      digitalWrite(RED,LOW);
+    
+}
 void checkServerForFreeAccess() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -63,9 +69,16 @@ void checkServerForFreeAccess() {
       StaticJsonDocument<200> doc;
       DeserializationError error = deserializeJson(doc, response);
 
-      if (!error && doc.containsKey("access") && doc["access"] == true) {
+      if (!error && doc.containsKey("access")) {
+        if(doc["access"] == true){
         openGate();
       }
+      else if(doc["access"]=="reject")
+      {
+        rejectResponse();
+        Serial.println("REJECCCCCCCCCCCCCCCCTTTTTTTT");
+      }}
+    
     } else {
       Serial.println("Free access check failed. Code: " + String(httpResponseCode));
     }
@@ -118,7 +131,7 @@ void handleServerResponse(const String& response) {
 
   if (doc.containsKey("access")) {
     permission = doc["access"];
-    Serial.print("<  Permission is: ");
+    Serial.print("<  Permission is: ");  
     Serial.println(permission ? "true" : "false");
 
     if (permission) {
@@ -225,6 +238,10 @@ void loop() {
   // Citire date de la client Bluetooth
   if (SerialBT.available())
    {  code = SerialBT.readStringUntil('\n');
+    if (code == "REJECT")
+    {
+      rejectResponse();
+    }
       if( code=="TRUE")
       {
         openGate(); //pieton

@@ -1,0 +1,5 @@
+id,division_id,photo_url,badge_number,bluetooth_code,access_enabled,name,allowed_schedule,granted_by
+090d04bd-917b-48ae-84f4-129c3987cab8,3,,78987,12345678,true,Abel,08:00-18:00,
+2f0500dd-6574-4c12-9d21-3947cbf4a5ef,3,https://fvdjsuvfaxhgevdibfsa.supabase.co/storage/v1/object/public/images//alice.jpg,EMP001,BLE123EMP,true,Alice Johnson,08:00-18:00,090d04bd-917b-48ae-84f4-129c3987cab8
+4ece7389-20c0-46ad-949e-b9345ed91cd5,2,https://fvdjsuvfaxhgevdibfsa.supabase.co/storage/v1/object/public/images//bob.jpg,EMP002,BLE456EMP,true,Bob Smith,08:00-18:00,
+63603a59-0c66-40df-94f0-d95a88437b9d,3,,1112233,1234,true,Johnny Abel,08:00-18:00,090d04bd-917b-48ae-84f4-129c3987cab8
