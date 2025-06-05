@@ -4,6 +4,9 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
+#include "FS.h"
+#include "SPIFFS.h"
+
 #define RED 18
 #define GREEN 17
 #define BLUE 19
@@ -23,9 +26,9 @@ enum STATE {
 
 const char* ssid = "bofadn2";
 const char* password = "12345678";
-const char* serverName1 = "http://192.168.127.234:3000/api/free-access";
-const char* serverName2 = "http://192.168.127.234:3000/api/verify-access-from-mobile";
-const char* serverName3 = "http://192.168.127.234:3000/api/manual-open";
+const char* serverName1 = "http://192.168.127.156:3000/api/free-access";
+const char* serverName2 = "http://192.168.127.156:3000/api/verify-access-from-mobile";
+const char* serverName3 = "http://192.168.127.156:3000/api/manual-open";
 unsigned long lastPrintTime = 0;
 bool wasConnected = false;
 bool acces = false;
@@ -50,6 +53,7 @@ void openGate()
 }
 void rejectResponse()
 {
+      Serial.println("REJECCCCCCCCCCCCCCCCTTTTTTTT");
       digitalWrite(RED,HIGH);
       delay(1000);
       digitalWrite(RED,LOW);
@@ -73,10 +77,9 @@ void checkServerForFreeAccess() {
         if(doc["access"] == true){
         openGate();
       }
-      else if(doc["access"]=="reject")
+      else if(doc["access"]==2)
       {
         rejectResponse();
-        Serial.println("REJECCCCCCCCCCCCCCCCTTTTTTTT");
       }}
     
     } else {
@@ -171,9 +174,54 @@ void sendStringToServer() {
 }
 
 
+int verificaAcces(String codCautat) {
+  File file = SPIFFS.open("/config.csv", "r");
+  if (!file) {
+    Serial.println("Eroare la deschiderea fisierului CSV");
+    return -1;
+  }
+
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    line.trim(); // elimina spatii si \r
+
+    int fieldIndex = 0;
+    int start = 0;
+    String codGasit = "";
+    String acces = "";
+
+    for (int i = 0; i <= line.length(); i++) {
+      if (line[i] == ',' || i == line.length()) {
+        String field = line.substring(start, i);
+        field.trim();
+
+        if (fieldIndex == 4) codGasit = field;       // Coloana 5
+        if (fieldIndex == 5) acces = field;          // Coloana 6
+
+        fieldIndex++;
+        start = i + 1;
+      }
+    }
+
+    if (codGasit == codCautat) {
+      file.close();
+      if (acces == "true") return 1;
+      else return 0;
+    }
+  }
+
+  file.close();
+  return -1; // codul nu a fost gasit
+}
+
+
 void setup() {
   Serial.begin(115200);
  
+//   if (!SPIFFS.begin(true)) {
+//   Serial.println("Eroare la montarea SPIFFS");
+// }
+
   pinMode(intrare_SENSOR, INPUT_PULLUP);
   pinMode(iesire_SENSOR, INPUT_PULLUP);
   myServo.attach(SERVO);
@@ -233,7 +281,7 @@ void loop() {
     }
   }
 
-  if(iesireState==LOW || intrareState==LOW)
+  if(iesireState==LOW || intrareState==LOW)  //current state
   {
   // Citire date de la client Bluetooth
   if (SerialBT.available())
