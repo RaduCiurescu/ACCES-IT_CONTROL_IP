@@ -7,8 +7,8 @@
 #include "FS.h"
 #include "SPIFFS.h"
 
-#define RED 18
-#define GREEN 17
+#define RED 23
+#define GREEN 21
 #define BLUE 19
 #define YELLOW 16
 #define SERVO 15
@@ -26,9 +26,9 @@ enum STATE {
 
 const char* ssid = "bofadn2";
 const char* password = "12345678";
-const char* serverName1 = "http://192.168.5.156:3000/api/free-access";
-const char* serverName2 = "http://192.168.5.156:3000/api/verify-access-from-mobile";
-const char* serverName3 = "http://192.168.5.156:3000/api/manual-open";
+const char* serverName1 = "http://192.168.127.156:3000/api/free-access";
+const char* serverName2 = "http://192.168.127.156:3000/api/verify-access-from-mobile";
+const char* serverName3 = "http://192.168.127.156:3000/api/manual-open";
 unsigned long lastPrintTime = 0;
 bool wasConnected = false;
 bool acces = false;
@@ -42,27 +42,27 @@ bool internetSTATE=false;
 void openGate()
 {
   Serial.println("DESCHIDE BARIERA");
-  myServo.write(90); // Deschide bariera
+  myServo.write(90); 
   digitalWrite(BLUE,HIGH);
   digitalWrite(GREEN,HIGH);
   delay(1000);
   digitalWrite(GREEN,LOW);
   delay(2000);
-  myServo.write(0); // Închide bariera
+  myServo.write(0); 
   digitalWrite(BLUE,LOW);
 }
 void rejectResponse()
 {
       Serial.println("REJECCCCCCCCCCCCCCCCTTTTTTTT");
       digitalWrite(RED,HIGH);
-      delay(1000);
+      delay(2000);
       digitalWrite(RED,LOW);
     
 }
 void checkServerForFreeAccess() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(serverName1); // Update this endpoint if needed
+    http.begin(serverName1); 
     http.setTimeout(2000);
     
     int httpResponseCode = http.GET();
@@ -93,7 +93,7 @@ void checkServerForFreeAccess() {
 void checkServerForFreeAccess2() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(serverName3); // Update this endpoint if needed
+    http.begin(serverName3);
     http.setTimeout(1000);
     
     int httpResponseCode = http.GET();
@@ -151,7 +151,7 @@ void sendStringToServer() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverName2);
-    http.setTimeout(3000);  // Timeout conexiune
+    http.setTimeout(3000);
     http.addHeader("Content-Type", "application/json");
 
     String payload = "{\"id\":\"" + code + "\"}";
@@ -219,13 +219,13 @@ void setup() {
   Serial.begin(115200);
  
 //   if (!SPIFFS.begin(true)) {
-//   Serial.println("Eroare la montarea SPIFFS");
+//   Serial.println("Eroare SPIFFS");
 // }
 
   pinMode(intrare_SENSOR, INPUT_PULLUP);
   pinMode(iesire_SENSOR, INPUT_PULLUP);
   myServo.attach(SERVO);
-  myServo.write(90); // Închide bariera inițial
+  myServo.write(0); 
 
  
   pinMode(RED,OUTPUT);
@@ -233,7 +233,7 @@ void setup() {
   pinMode(BLUE,OUTPUT);
   pinMode(YELLOW,OUTPUT);
  
-  SerialBT.begin("ESP32_ACCESS"); // Numele ESP32 ca dispozitiv Bluetooth
+  SerialBT.begin("ESP32_ACCESS");
   WiFi.begin(ssid, password);
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Connecting to WiFi...");
@@ -250,7 +250,6 @@ void loop() {
   
   int iesireState = digitalRead(iesire_SENSOR);
   int intrareState = digitalRead(intrare_SENSOR);
-  // Verificăm dacă a trecut 1 secundă
   if(WiFi.status() != WL_CONNECTED)
   {
     Serial.println("trying to connect");
@@ -283,7 +282,6 @@ void loop() {
 
   if(iesireState==LOW || intrareState==LOW)  //current state
   {
-  // Citire date de la client Bluetooth
   if (SerialBT.available())
    {  code = SerialBT.readStringUntil('\n');
     if (code == "REJECT")
@@ -316,7 +314,7 @@ void loop() {
     currentState = NONE;
     code = "";
     permission = false;
-    myServo.write(90); // Închide bariera
+    myServo.write(90);
   }
   delay(1000);
 }
