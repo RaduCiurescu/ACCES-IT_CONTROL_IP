@@ -26,9 +26,9 @@ enum STATE {
 
 const char* ssid = "bofadn2";
 const char* password = "12345678";
-const char* serverName1 = "http://192.168.127.156:3000/api/free-access";
-const char* serverName2 = "http://192.168.127.156:3000/api/verify-access-from-mobile";
-const char* serverName3 = "http://192.168.127.156:3000/api/manual-open";
+const char* serverName1 = "http://192.168.5.156:3000/api/free-access";
+const char* serverName2 = "http://192.168.5.156:3000/api/verify-access-from-mobile";
+const char* serverName3 = "http://192.168.5.156:3000/api/manual-open";
 unsigned long lastPrintTime = 0;
 bool wasConnected = false;
 bool acces = false;
@@ -63,7 +63,7 @@ void checkServerForFreeAccess() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(serverName1); // Update this endpoint if needed
-    http.setTimeout(1000);
+    http.setTimeout(2000);
     
     int httpResponseCode = http.GET();
     if (httpResponseCode > 0) {
